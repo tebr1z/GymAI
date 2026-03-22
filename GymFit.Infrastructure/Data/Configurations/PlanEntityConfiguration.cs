@@ -25,9 +25,10 @@ public sealed class PlanEntityConfiguration : IEntityTypeConfiguration<Plan>
 
         builder.Property(x => x.CreatedAt).IsRequired();
 
-        builder.HasIndex(x => x.UserId);
         builder.HasIndex(x => x.TrainerId);
         builder.HasIndex(x => new { x.UserId, x.Type });
-        builder.HasIndex(x => x.CreatedAt);
+
+        // Paginated "my plans": WHERE UserId ORDER BY CreatedAt DESC.
+        builder.HasIndex(x => new { x.UserId, x.CreatedAt });
     }
 }

@@ -31,9 +31,11 @@ public sealed class SubscriptionEntityConfiguration : IEntityTypeConfiguration<S
         builder.Property(x => x.ExternalCustomerId).HasMaxLength(256);
         builder.Property(x => x.ExternalSubscriptionId).HasMaxLength(256);
 
-        builder.HasIndex(x => x.UserId);
-        builder.HasIndex(x => new { x.UserId, x.Status });
         builder.HasIndex(x => x.EndDate);
         builder.HasIndex(x => new { x.ExternalProvider, x.ExternalSubscriptionId });
+
+        // Active subscription: WHERE UserId AND Status AND date range (OrderBy EndDate in queries).
+        builder.HasIndex(x => new { x.UserId, x.Status, x.EndDate });
+        builder.HasIndex(x => new { x.UserId, x.Status, x.StartDate });
     }
 }

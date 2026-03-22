@@ -11,9 +11,18 @@ C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Infrastructure\obj\Debug\net8.
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Infrastructure\obj\Debug\net8.0\GymFit.Infrastructure.AssemblyInfoInputs.cache
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Infrastructure\obj\Debug\net8.0\GymFit.Infrastructure.AssemblyInfo.cs
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Infrastructure\obj\Debug\net8.0\GymFit.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Infrastructure\obj\Debug\net8.0\GymFit.Infrastructure.sourcelink.json
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Infrastructure\obj\Debug\net8.0\GymFit.I.C7343E07.Up2Date
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Infrastructure\obj\Debug\net8.0\GymFit.Infrastructure.dll
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Infrastructure\obj\Debug\net8.0\refint\GymFit.Infrastructure.dll
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Infrastructure\obj\Debug\net8.0\GymFit.Infrastructure.pdb
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Infrastructure\obj\Debug\net8.0\GymFit.Infrastructure.genruntimeconfig.cache
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Infrastructure\obj\Debug\net8.0\ref\GymFit.Infrastructure.dll
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut\GymFit.Infrastructure.deps.json
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut\GymFit.Infrastructure.runtimeconfig.json
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut\GymFit.Infrastructure.dll
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut\GymFit.Infrastructure.pdb
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Infrastructure.deps.json
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Infrastructure.runtimeconfig.json
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Infrastructure.dll
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Infrastructure.pdb

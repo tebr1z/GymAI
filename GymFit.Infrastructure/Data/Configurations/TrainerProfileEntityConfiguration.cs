@@ -20,8 +20,9 @@ public sealed class TrainerProfileEntityConfiguration : IEntityTypeConfiguration
         builder.Property(x => x.Rating).HasPrecision(4, 2).IsRequired();
         builder.Property(x => x.IsApproved).IsRequired();
 
-        builder.HasIndex(x => x.IsApproved);
-        builder.HasIndex(x => x.Rating);
+        // Marketplace: WHERE IsApproved AND optional rating/price filters, ORDER BY Rating.
+        builder.HasIndex(x => new { x.IsApproved, x.Rating });
+        builder.HasIndex(x => new { x.IsApproved, x.PricePerMonth });
 
         builder.HasMany(x => x.TrainerOrders)
             .WithOne(x => x.TrainerProfile)

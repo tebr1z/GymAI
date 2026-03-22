@@ -26,16 +26,6 @@ public sealed class TrainerProfileRepository : Repository<TrainerProfile>, ITrai
             .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<TrainerProfile>> ListApprovedAsync(CancellationToken cancellationToken = default)
-    {
-        return await DbSet.AsNoTracking()
-            .Include(x => x.User)
-            .Where(x => x.IsApproved)
-            .OrderByDescending(x => x.Rating)
-            .ThenBy(x => x.User.FullName)
-            .ToListAsync(cancellationToken);
-    }
-
     public async Task<(IReadOnlyList<TrainerProfile> Items, int TotalCount)> ListApprovedMarketplaceAsync(
         int page,
         int pageSize,

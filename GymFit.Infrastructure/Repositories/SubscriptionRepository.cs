@@ -33,7 +33,7 @@ public sealed class SubscriptionRepository : Repository<Subscription>, ISubscrip
         DateTime utcNow,
         CancellationToken cancellationToken = default)
     {
-        return await DbSet
+        return await DbSet.AsTracking()
             .Where(s =>
                 s.UserId == userId
                 && s.Status == SubscriptionStatus.Active

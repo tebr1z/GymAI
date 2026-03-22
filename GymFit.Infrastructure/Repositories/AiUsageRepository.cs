@@ -28,7 +28,7 @@ public sealed class AiUsageRepository : Repository<AiUsageLedger>, IAiUsageRepos
         string periodKey,
         CancellationToken cancellationToken = default)
     {
-        return await DbSet.FirstOrDefaultAsync(
+        return await DbSet.AsTracking().FirstOrDefaultAsync(
             x => x.UserId == userId && x.PeriodKey == periodKey,
             cancellationToken);
     }

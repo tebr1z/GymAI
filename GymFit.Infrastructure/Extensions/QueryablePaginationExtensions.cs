@@ -6,7 +6,10 @@ namespace GymFit.Infrastructure.Extensions;
 
 public static class QueryablePaginationExtensions
 {
-    /// <summary>Executes count + page slice in two round-trips. Use inside repositories/services on EF queries.</summary>
+    /// <summary>
+    /// Executes count + page slice in two round-trips.
+    /// Prefer building <paramref name="source"/> from <c>AsNoTracking()</c> reads (default for this API’s DbContext).
+    /// </summary>
     public static async Task<PagedResult<T>> ToPagedResultAsync<T>(
         this IQueryable<T> source,
         int page,

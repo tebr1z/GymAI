@@ -23,17 +23,12 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : BaseEnti
 
     public virtual async Task<TEntity?> GetByIdTrackedAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await DbSet.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return await DbSet.AsTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
     public virtual async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await DbSet.AnyAsync(x => x.Id == id, cancellationToken);
-    }
-
-    public virtual async Task<IReadOnlyList<TEntity>> ListAsync(CancellationToken cancellationToken = default)
-    {
-        return await DbSet.AsNoTracking().ToListAsync(cancellationToken);
     }
 
     public virtual async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default)

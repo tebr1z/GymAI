@@ -23,10 +23,14 @@ public sealed class TrainerOrderEntityConfiguration : IEntityTypeConfiguration<T
 
         builder.Property(x => x.CreatedAt).IsRequired();
 
-        builder.HasIndex(x => x.UserId);
         builder.HasIndex(x => x.TrainerId);
-        builder.HasIndex(x => x.TrainerProfileId);
         builder.HasIndex(x => x.Status);
-        builder.HasIndex(x => x.CreatedAt);
+
+        // List bookings / orders by recency; supports WHERE userId = ? ORDER BY CreatedAt DESC.
+        builder.HasIndex(x => new { x.UserId, x.CreatedAt });
+        builder.HasIndex(x => new { x.TrainerProfileId, x.CreatedAt });
+
+        // Pending booking check: UserId + TrainerProfileId + Status.
+        builder.HasIndex(x => new { x.UserId, x.TrainerProfileId, x.Status });
     }
 }
