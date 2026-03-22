@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 namespace GymFit.Api.Middlewares;
 
 /// <summary>
-/// Catches unhandled exceptions, returns <see cref="GlobalErrorResponse"/>, and logs full diagnostic context.
+/// Catches unhandled exceptions, returns <see cref="ApiResponse{T}"/>, and logs full diagnostic context.
 /// Does not catch exceptions after the response has started (those are logged and rethrown).
 /// </summary>
 public sealed class ExceptionHandlingMiddleware
@@ -61,19 +61,34 @@ public sealed class ExceptionHandlingMiddleware
         if (_environment.IsDevelopment() && mapped.StatusCode == StatusCodes.Status500InternalServerError)
             details = exception.ToString();
 
-        var validationErrors = exception is ValidationException ve
-            ? GroupValidationErrors(ve)
-            : null;
-
-        var payload = new GlobalErrorResponse
-        {
-            Success = false,
-            Message = mapped.Message,
-            Details = details,
-            Errors = validationErrors
-        };
+        var errors = FlattenExceptionErrors(exception, details);
+        var payload = ApiResponse<object?>.Fail(mapped.Message, errors);
 
         await context.Response.WriteAsync(JsonSerializer.Serialize(payload, ApiJson.Options));
+    }
+
+    private static IReadOnlyList<string> FlattenExceptionErrors(Exception exception, string? details)
+    {
+        if (exception is ValidationException ve)
+            return ve.Errors
+                .Select(e => string.IsNullOrEmpty(e.PropertyName)
+                    ? e.ErrorMessage
+                    : $"{ToCamelCaseKey(e.PropertyName)}: {e.ErrorMessage}")
+                .ToList();
+
+        if (!string.IsNullOrWhiteSpace(details))
+            return new[] { details! };
+
+        return Array.Empty<string>();
+    }
+
+    private static string ToCamelCaseKey(string key)
+    {
+        if (string.IsNullOrEmpty(key) || key == "_")
+            return key;
+        if (!char.IsUpper(key[0]))
+            return key;
+        return char.ToLowerInvariant(key[0]) + key[1..];
     }
 
     private void LogException(HttpContext context, Exception exception, string headline)
@@ -124,35 +139,29 @@ public sealed class ExceptionHandlingMiddleware
     private MappedError MapException(Exception exception) =>
         exception switch
         {
-            ValidationException ve => new MappedError(
+            ValidationException => new MappedError(
                 StatusCodes.Status400BadRequest,
-                "One or more validation rules failed.",
-                FormatValidationDetails(ve)),
+                "One or more validation rules failed."),
 
             OperationCanceledException => new MappedError(
                 StatusCodes.Status408RequestTimeout,
-                "The request was cancelled or timed out.",
-                null),
+                "The request was cancelled or timed out."),
 
             UnauthorizedAccessException => new MappedError(
                 StatusCodes.Status401Unauthorized,
-                exception.Message,
-                null),
+                exception.Message),
 
             KeyNotFoundException => new MappedError(
                 StatusCodes.Status404NotFound,
-                exception.Message,
-                null),
+                exception.Message),
 
             ArgumentException => new MappedError(
                 StatusCodes.Status400BadRequest,
-                exception.Message,
-                null),
+                exception.Message),
 
             InvalidOperationException => new MappedError(
                 StatusCodes.Status400BadRequest,
-                exception.Message,
-                null),
+                exception.Message),
 
             DbUpdateException => MapDbUpdateException(exception),
 
@@ -160,37 +169,8 @@ public sealed class ExceptionHandlingMiddleware
                 StatusCodes.Status500InternalServerError,
                 _environment.IsDevelopment()
                     ? exception.Message
-                    : "An unexpected error occurred. Please try again later.",
-                null)
+                    : "An unexpected error occurred. Please try again later.")
         };
-
-    private static string FormatValidationDetails(ValidationException ve)
-    {
-        var parts = ve.Errors
-            .Select(e => string.IsNullOrEmpty(e.PropertyName)
-                ? e.ErrorMessage
-                : $"{e.PropertyName}: {e.ErrorMessage}");
-        return string.Join("; ", parts);
-    }
-
-    private static Dictionary<string, string[]> GroupValidationErrors(ValidationException ve)
-    {
-        return ve.Errors
-            .GroupBy(e => string.IsNullOrEmpty(e.PropertyName) ? "_" : e.PropertyName)
-            .ToDictionary(
-                g => ToCamelCaseKey(g.Key),
-                g => g.Select(x => string.IsNullOrEmpty(x.ErrorMessage) ? "Invalid value." : x.ErrorMessage).ToArray(),
-                StringComparer.Ordinal);
-    }
-
-    private static string ToCamelCaseKey(string key)
-    {
-        if (string.IsNullOrEmpty(key) || key == "_")
-            return key;
-        if (!char.IsUpper(key[0]))
-            return key;
-        return char.ToLowerInvariant(key[0]) + key[1..];
-    }
 
     private MappedError MapDbUpdateException(Exception exception)
     {
@@ -202,5 +182,5 @@ public sealed class ExceptionHandlingMiddleware
         return new MappedError(StatusCodes.Status400BadRequest, message, details);
     }
 
-    private readonly record struct MappedError(int StatusCode, string Message, string? Details);
+    private readonly record struct MappedError(int StatusCode, string Message, string? Details = null);
 }

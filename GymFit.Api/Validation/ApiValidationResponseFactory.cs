@@ -9,24 +9,20 @@ public static class ApiValidationResponseFactory
     {
         var fieldErrors = context.ModelState
             .Where(x => x.Value?.Errors.Count > 0)
-            .ToDictionary(
-                x => ToCamelCaseKey(string.IsNullOrEmpty(x.Key) ? "_" : x.Key),
-                x => x.Value!.Errors
-                    .Select(e => string.IsNullOrEmpty(e.ErrorMessage) ? "Invalid value." : e.ErrorMessage)
-                    .ToArray(),
-                StringComparer.Ordinal);
+            .SelectMany(x =>
+            {
+                var key = ToCamelCaseKey(string.IsNullOrEmpty(x.Key) ? "_" : x.Key);
+                return x.Value!.Errors.Select(e =>
+                {
+                    var msg = string.IsNullOrEmpty(e.ErrorMessage) ? "Invalid value." : e.ErrorMessage;
+                    return key == "_" ? msg : $"{key}: {msg}";
+                });
+            })
+            .ToList();
 
-        var details = string.Join(
-            "; ",
-            fieldErrors.SelectMany(kv => kv.Value.Select(msg => $"{kv.Key}: {msg}")));
-
-        var payload = new GlobalErrorResponse
-        {
-            Success = false,
-            Message = "Validation failed. See errors for field-specific messages.",
-            Details = string.IsNullOrEmpty(details) ? null : details,
-            Errors = fieldErrors.Count > 0 ? fieldErrors : null
-        };
+        var payload = ApiResponse<object?>.Fail(
+            "Validation failed. See errors for details.",
+            fieldErrors);
 
         return new BadRequestObjectResult(payload);
     }

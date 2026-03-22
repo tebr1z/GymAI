@@ -1,10 +1,12 @@
 using Asp.Versioning.ApiExplorer;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using GymFit.Api.Authorization;
 using GymFit.Api.Extensions;
 using GymFit.Api.Helpers;
 using GymFit.Api.Middlewares;
 using GymFit.Api.Validation;
+using Microsoft.AspNetCore.Authorization;
 using GymFit.Application;
 using GymFit.Application.Abstractions;
 using GymFit.Application.Validators;
@@ -41,6 +43,7 @@ builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
 builder.Services.AddGymFitJwtAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddGymFitAuthorizationPolicies();
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, StandardApiAuthorizationMiddlewareResultHandler>();
 
 ValidatorOptions.Global.PropertyNameResolver = (_, member, _) =>
     member?.Name is { Length: > 0 } n

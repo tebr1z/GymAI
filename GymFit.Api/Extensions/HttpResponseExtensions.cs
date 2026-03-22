@@ -15,12 +15,11 @@ public static class HttpResponseExtensions
         httpContext.Response.StatusCode = statusCode;
         httpContext.Response.ContentType = "application/json; charset=utf-8";
 
-        var payload = new GlobalErrorResponse
-        {
-            Success = false,
-            Message = message,
-            Details = details
-        };
+        var errors = string.IsNullOrWhiteSpace(details)
+            ? Array.Empty<string>()
+            : new[] { details };
+
+        var payload = ApiResponse<object?>.Fail(message, errors);
 
         await httpContext.Response.WriteAsync(JsonSerializer.Serialize(payload, ApiJson.Options));
     }

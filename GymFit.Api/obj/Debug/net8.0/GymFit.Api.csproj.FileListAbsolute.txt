@@ -151,3 +151,11 @@ C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut\GymFit.Api.pdb
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Api\obj\Debug\net8.0\GymFit.Api.csproj.Up2Date
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Api\obj\Debug\net8.0\GymFit.Api.genruntimeconfig.cache
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Api\obj\Debug\net8.0\ref\GymFit.Api.dll
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\appsettings.Development.json
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\appsettings.json
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Api.staticwebassets.endpoints.json
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Api.exe
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Api.deps.json
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Api.runtimeconfig.json
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Api.dll
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Api.pdb

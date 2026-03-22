@@ -15,28 +15,26 @@ public abstract class ApiV1ControllerBase : ControllerBase
         if (result.IsSuccess)
             return Ok(result.Value);
 
-        return ServiceFailure(result.Error, result.Kind);
+        return FailureStatus(result.Error, result.Kind);
     }
 
     protected IActionResult MapToActionResult(ServiceResult result)
     {
         if (result.IsSuccess)
-            return NoContent();
+        {
+            return StatusCode(
+                StatusCodes.Status200OK,
+                ApiResponse<object?>.Ok(null, "Completed successfully"));
+        }
 
-        return ServiceFailure(result.Error, result.Kind);
+        return FailureStatus(result.Error, result.Kind);
     }
 
-    private ObjectResult ServiceFailure(string? message, ServiceFailureKind kind)
+    private ObjectResult FailureStatus(string? message, ServiceFailureKind kind)
     {
         var status = (int)kind;
-        var payload = new GlobalErrorResponse
-        {
-            Success = false,
-            Message = string.IsNullOrWhiteSpace(message) ? "The request could not be completed." : message!,
-            Details = null,
-            Errors = null
-        };
-
-        return StatusCode(status, payload);
+        var text = string.IsNullOrWhiteSpace(message) ? "The request could not be completed." : message!;
+        var body = ApiResponse<object?>.Fail(text, Array.Empty<string>());
+        return StatusCode(status, body);
     }
 }
