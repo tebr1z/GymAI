@@ -1,0 +1,11 @@
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\bin\Release\net8.0\GymFit.Domain.deps.json
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\bin\Release\net8.0\GymFit.Domain.dll
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\bin\Release\net8.0\GymFit.Domain.pdb
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Release\net8.0\GymFit.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Release\net8.0\GymFit.Domain.AssemblyInfoInputs.cache
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Release\net8.0\GymFit.Domain.AssemblyInfo.cs
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Release\net8.0\GymFit.Domain.csproj.CoreCompileInputs.cache
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Release\net8.0\GymFit.Domain.dll
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Release\net8.0\refint\GymFit.Domain.dll
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Release\net8.0\GymFit.Domain.pdb
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Release\net8.0\ref\GymFit.Domain.dll

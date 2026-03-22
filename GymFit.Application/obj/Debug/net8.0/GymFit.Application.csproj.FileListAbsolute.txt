@@ -1,0 +1,15 @@
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\bin\Debug\net8.0\GymFit.Application.deps.json
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\bin\Debug\net8.0\GymFit.Application.dll
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\bin\Debug\net8.0\GymFit.Application.pdb
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\bin\Debug\net8.0\GymFit.Domain.dll
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\bin\Debug\net8.0\GymFit.Domain.pdb
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\GymFit.Application.csproj.AssemblyReference.cache
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\GymFit.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\GymFit.Application.AssemblyInfoInputs.cache
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\GymFit.Application.AssemblyInfo.cs
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\GymFit.Application.csproj.CoreCompileInputs.cache
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\GymFit.A.7322037E.Up2Date
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\GymFit.Application.dll
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\refint\GymFit.Application.dll
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\GymFit.Application.pdb
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\ref\GymFit.Application.dll
