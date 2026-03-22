@@ -5,6 +5,7 @@ using GymFit.Application.DTOs.Subscriptions;
 using GymFit.Application.Repositories;
 using GymFit.Domain.Entities;
 using GymFit.Domain.Enums;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace GymFit.Application.Services;
@@ -16,75 +17,95 @@ public sealed class SubscriptionService : ISubscriptionService
     private readonly IUserRepository _users;
     private readonly IUnitOfWork _unitOfWork;
     private readonly SubscriptionTierLimitsOptions _limits;
+    private readonly ILogger<SubscriptionService> _logger;
 
     public SubscriptionService(
         ISubscriptionRepository subscriptions,
         IAiUsageRepository usage,
         IUserRepository users,
         IUnitOfWork unitOfWork,
-        IOptions<SubscriptionTierLimitsOptions> limits)
+        IOptions<SubscriptionTierLimitsOptions> limits,
+        ILogger<SubscriptionService> logger)
     {
         _subscriptions = subscriptions;
         _usage = usage;
         _users = users;
         _unitOfWork = unitOfWork;
         _limits = limits.Value;
+        _logger = logger;
     }
 
-    public async Task<SubscriptionOverviewDto> GetOverviewForUserAsync(
+    public Task<ServiceResult<SubscriptionOverviewDto>> GetOverviewForUserAsync(
         Guid userId,
-        CancellationToken cancellationToken = default)
-    {
-        var now = DateTime.UtcNow;
-        var active = await _subscriptions.GetActiveForUserAsync(userId, now, cancellationToken);
-        var tier = active?.Tier ?? SubscriptionTier.Free;
-        var periodKey = BillingPeriod.CurrentUtcMonthKey(now);
-        var used = await _usage.GetRequestCountAsync(userId, periodKey, cancellationToken);
-        var limit = GetMonthlyLimit(tier);
-
-        return new SubscriptionOverviewDto
+        CancellationToken cancellationToken = default) =>
+        ServiceExecution.RunAsync(_logger, nameof(GetOverviewForUserAsync), async () =>
         {
-            EffectiveTier = tier,
-            Status = active?.Status,
-            PeriodEndUtc = active?.EndDate,
-            AiRequestsLimitPerMonth = limit,
-            AiRequestsUsedThisMonth = used,
-            AiUnlimited = limit < 0
-        };
-    }
+            if (userId == Guid.Empty)
+                return ServiceResult<SubscriptionOverviewDto>.Fail("Invalid user id.", ServiceFailureKind.BadRequest);
 
-    public async Task AssignAsync(AssignSubscriptionDto request, CancellationToken cancellationToken = default)
-    {
-        if (!await _users.ExistsAsync(request.UserId, cancellationToken))
-            throw new KeyNotFoundException("User was not found.");
+            var now = DateTime.UtcNow;
+            var active = await _subscriptions.GetActiveForUserAsync(userId, now, cancellationToken);
+            var tier = active?.Tier ?? SubscriptionTier.Free;
+            var periodKey = BillingPeriod.CurrentUtcMonthKey(now);
+            var used = await _usage.GetRequestCountAsync(userId, periodKey, cancellationToken);
+            var limit = GetMonthlyLimit(tier);
 
-        var now = DateTime.UtcNow;
-        if (request.EndDateUtc <= now)
-            throw new InvalidOperationException("Subscription end date must be in the future.");
+            return ServiceResult<SubscriptionOverviewDto>.Ok(new SubscriptionOverviewDto
+            {
+                EffectiveTier = tier,
+                Status = active?.Status,
+                PeriodEndUtc = active?.EndDate,
+                AiRequestsLimitPerMonth = limit,
+                AiRequestsUsedThisMonth = used,
+                AiUnlimited = limit < 0
+            });
+        });
 
-        var trackedActives = await _subscriptions.ListActiveTrackedForUserAsync(request.UserId, now, cancellationToken);
-        foreach (var existing in trackedActives)
+    public Task<ServiceResult> AssignAsync(AssignSubscriptionDto request, CancellationToken cancellationToken = default) =>
+        ServiceExecution.RunAsync(_logger, nameof(AssignAsync), async () =>
         {
-            existing.Status = SubscriptionStatus.Cancelled;
-            _subscriptions.Update(existing);
-        }
+            if (request is null)
+                return ServiceResult.Fail("Request body is required.", ServiceFailureKind.BadRequest);
 
-        var subscription = new Subscription
-        {
-            Id = Guid.NewGuid(),
-            UserId = request.UserId,
-            Tier = request.Tier,
-            Status = SubscriptionStatus.Active,
-            StartDate = now,
-            EndDate = request.EndDateUtc,
-            ExternalProvider = request.ExternalProvider,
-            ExternalCustomerId = request.ExternalCustomerId,
-            ExternalSubscriptionId = request.ExternalSubscriptionId
-        };
+            if (request.UserId == Guid.Empty)
+                return ServiceResult.Fail("User id is invalid.", ServiceFailureKind.BadRequest);
 
-        await _subscriptions.AddAsync(subscription, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-    }
+            if (!await _users.ExistsAsync(request.UserId, cancellationToken))
+                return ServiceResult.Fail("User was not found.", ServiceFailureKind.NotFound);
+
+            var now = DateTime.UtcNow;
+            if (request.EndDateUtc <= now)
+            {
+                return ServiceResult.Fail(
+                    "Subscription end date must be in the future.",
+                    ServiceFailureKind.BadRequest);
+            }
+
+            var trackedActives = await _subscriptions.ListActiveTrackedForUserAsync(request.UserId, now, cancellationToken);
+            foreach (var existing in trackedActives)
+            {
+                existing.Status = SubscriptionStatus.Cancelled;
+                _subscriptions.Update(existing);
+            }
+
+            var subscription = new Subscription
+            {
+                Id = Guid.NewGuid(),
+                UserId = request.UserId,
+                Tier = request.Tier,
+                Status = SubscriptionStatus.Active,
+                StartDate = now,
+                EndDate = request.EndDateUtc,
+                ExternalProvider = request.ExternalProvider,
+                ExternalCustomerId = request.ExternalCustomerId,
+                ExternalSubscriptionId = request.ExternalSubscriptionId
+            };
+
+            await _subscriptions.AddAsync(subscription, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return ServiceResult.Ok();
+        });
 
     private int GetMonthlyLimit(SubscriptionTier tier) =>
         tier switch

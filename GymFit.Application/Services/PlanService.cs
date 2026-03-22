@@ -7,6 +7,7 @@ using GymFit.Application.DTOs.Plans;
 using GymFit.Application.Repositories;
 using GymFit.Domain.Entities;
 using GymFit.Domain.Enums;
+using Microsoft.Extensions.Logging;
 
 namespace GymFit.Application.Services;
 
@@ -17,96 +18,140 @@ public sealed class PlanService : IPlanService
     private readonly ITrainerProfileRepository _trainerProfiles;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly ILogger<PlanService> _logger;
 
     public PlanService(
         IPlanRepository plans,
         IUserRepository users,
         ITrainerProfileRepository trainerProfiles,
         IUnitOfWork unitOfWork,
-        IMapper mapper)
+        IMapper mapper,
+        ILogger<PlanService> logger)
     {
         _plans = plans;
         _users = users;
         _trainerProfiles = trainerProfiles;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _logger = logger;
     }
 
-    public async Task<PlanDto> CreateAsync(Guid userId, CreatePlanDto request, CancellationToken cancellationToken = default)
-    {
-        if (!await _users.ExistsAsync(userId, cancellationToken))
-            throw new KeyNotFoundException("User was not found.");
-
-        var content = request.Content?.Trim() ?? "{}";
-        if (string.IsNullOrWhiteSpace(content))
-            throw new InvalidOperationException("Plan content cannot be empty.");
-
-        try
+    public Task<ServiceResult<PlanDto>> CreateAsync(
+        Guid userId,
+        CreatePlanDto request,
+        CancellationToken cancellationToken = default) =>
+        ServiceExecution.RunAsync(_logger, nameof(CreateAsync), async () =>
         {
-            JsonDocument.Parse(content);
-        }
-        catch (JsonException)
-        {
-            throw new InvalidOperationException("Plan content must be valid JSON.");
-        }
+            if (request is null)
+                return ServiceResult<PlanDto>.Fail("Request body is required.", ServiceFailureKind.BadRequest);
 
-        Guid? trainerId = null;
-        if (request.TrainerId.HasValue)
-        {
-            trainerId = request.TrainerId.Value;
-            var trainer = await _users.GetByIdAsync(trainerId.Value, cancellationToken);
-            if (trainer is null)
-                throw new KeyNotFoundException("Trainer user was not found.");
+            if (userId == Guid.Empty)
+                return ServiceResult<PlanDto>.Fail("Invalid user id.", ServiceFailureKind.BadRequest);
 
-            if (trainer.Role != UserRole.Trainer && trainer.Role != UserRole.Admin)
-                throw new InvalidOperationException("Assigned user is not a trainer.");
+            if (!await _users.ExistsAsync(userId, cancellationToken))
+                return ServiceResult<PlanDto>.Fail("User was not found.", ServiceFailureKind.NotFound);
 
-            var profile = await _trainerProfiles.GetByUserIdWithUserAsync(trainerId.Value, cancellationToken);
-            if (profile is null || !profile.IsApproved)
-                throw new InvalidOperationException("Trainer does not have an approved profile.");
-        }
+            var content = request.Content?.Trim() ?? "{}";
+            if (string.IsNullOrWhiteSpace(content))
+                return ServiceResult<PlanDto>.Fail("Plan content cannot be empty.", ServiceFailureKind.BadRequest);
 
-        var plan = new Plan
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            TrainerId = trainerId,
-            Type = request.Type,
-            Content = content,
-            CreatedAt = DateTime.UtcNow
-        };
+            try
+            {
+                JsonDocument.Parse(content);
+            }
+            catch (JsonException)
+            {
+                return ServiceResult<PlanDto>.Fail("Plan content must be valid JSON.", ServiceFailureKind.BadRequest);
+            }
 
-        await _plans.AddAsync(plan, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+            Guid? trainerId = null;
+            if (request.TrainerId.HasValue)
+            {
+                trainerId = request.TrainerId.Value;
+                if (trainerId.Value == Guid.Empty)
+                    return ServiceResult<PlanDto>.Fail("Trainer id is invalid.", ServiceFailureKind.BadRequest);
 
-        var created = await _plans.GetByIdAsync(plan.Id, cancellationToken)
-                      ?? throw new InvalidOperationException("Plan was created but could not be loaded.");
+                var trainer = await _users.GetByIdAsync(trainerId.Value, cancellationToken);
+                if (trainer is null)
+                    return ServiceResult<PlanDto>.Fail("Trainer user was not found.", ServiceFailureKind.NotFound);
 
-        return _mapper.Map<PlanDto>(created);
-    }
+                if (trainer.Role != UserRole.Trainer && trainer.Role != UserRole.Admin)
+                {
+                    return ServiceResult<PlanDto>.Fail(
+                        "Assigned user is not a trainer.",
+                        ServiceFailureKind.BadRequest);
+                }
 
-    public async Task<PagedResult<PlanDto>> ListForUserAsync(
+                var profile = await _trainerProfiles.GetByUserIdWithUserAsync(trainerId.Value, cancellationToken);
+                if (profile is null || !profile.IsApproved)
+                {
+                    return ServiceResult<PlanDto>.Fail(
+                        "Trainer does not have an approved profile.",
+                        ServiceFailureKind.BadRequest);
+                }
+            }
+
+            var plan = new Plan
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                TrainerId = trainerId,
+                Type = request.Type,
+                Content = content,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _plans.AddAsync(plan, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            var created = await _plans.GetByIdAsync(plan.Id, cancellationToken);
+            if (created is null)
+            {
+                return ServiceResult<PlanDto>.Fail(
+                    "Plan was created but could not be loaded.",
+                    ServiceFailureKind.BadRequest);
+            }
+
+            return ServiceResult<PlanDto>.Ok(_mapper.Map<PlanDto>(created));
+        });
+
+    public Task<ServiceResult<PagedResult<PlanDto>>> ListForUserAsync(
         Guid userId,
         PaginationQuery query,
-        CancellationToken cancellationToken = default)
-    {
-        var (page, pageSize) = Pagination.Normalize(query.Page, query.PageSize);
-        var (items, total) = await _plans.ListByUserIdPagedAsync(userId, page, pageSize, cancellationToken);
-        var dtos = _mapper.Map<IReadOnlyList<PlanDto>>(items);
-        return PagedResult<PlanDto>.Create(dtos, total, page, pageSize);
-    }
+        CancellationToken cancellationToken = default) =>
+        ServiceExecution.RunAsync(_logger, nameof(ListForUserAsync), async () =>
+        {
+            if (userId == Guid.Empty)
+                return ServiceResult<PagedResult<PlanDto>>.Fail("Invalid user id.", ServiceFailureKind.BadRequest);
 
-    public async Task<PlanDto> GetAsync(Guid planId, Guid requesterUserId, CancellationToken cancellationToken = default)
-    {
-        var plan = await _plans.GetByIdWithUsersAsync(planId, cancellationToken);
-        if (plan is null)
-            throw new KeyNotFoundException("Plan was not found.");
+            var (page, pageSize) = Pagination.Normalize(query.Page, query.PageSize);
+            var (items, total) = await _plans.ListByUserIdPagedAsync(userId, page, pageSize, cancellationToken);
+            var dtos = _mapper.Map<IReadOnlyList<PlanDto>>(items);
+            return ServiceResult<PagedResult<PlanDto>>.Ok(PagedResult<PlanDto>.Create(dtos, total, page, pageSize));
+        });
 
-        var isOwner = plan.UserId == requesterUserId;
-        var isAssignedTrainer = plan.TrainerId == requesterUserId;
-        if (!isOwner && !isAssignedTrainer)
-            throw new InvalidOperationException("You are not allowed to view this plan.");
+    public Task<ServiceResult<PlanDto>> GetAsync(
+        Guid planId,
+        Guid requesterUserId,
+        CancellationToken cancellationToken = default) =>
+        ServiceExecution.RunAsync(_logger, nameof(GetAsync), async () =>
+        {
+            if (planId == Guid.Empty || requesterUserId == Guid.Empty)
+                return ServiceResult<PlanDto>.Fail("Invalid id.", ServiceFailureKind.BadRequest);
 
-        return _mapper.Map<PlanDto>(plan);
-    }
+            var plan = await _plans.GetByIdWithUsersAsync(planId, cancellationToken);
+            if (plan is null)
+                return ServiceResult<PlanDto>.Fail("Plan was not found.", ServiceFailureKind.NotFound);
+
+            var isOwner = plan.UserId == requesterUserId;
+            var isAssignedTrainer = plan.TrainerId == requesterUserId;
+            if (!isOwner && !isAssignedTrainer)
+            {
+                return ServiceResult<PlanDto>.Fail(
+                    "You are not allowed to view this plan.",
+                    ServiceFailureKind.Forbidden);
+            }
+
+            return ServiceResult<PlanDto>.Ok(_mapper.Map<PlanDto>(plan));
+        });
 }

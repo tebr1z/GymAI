@@ -8,8 +8,6 @@ public interface ITrainerProfileRepository : IRepository<TrainerProfile>
 
     Task<TrainerProfile?> GetByUserIdWithUserAsync(Guid userId, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<TrainerProfile>> ListApprovedAsync(CancellationToken cancellationToken = default);
-
     Task<(IReadOnlyList<TrainerProfile> Items, int TotalCount)> ListApprovedMarketplaceAsync(
         int page,
         int pageSize,

@@ -4,6 +4,7 @@ using GymFit.Application.Configuration;
 using GymFit.Application.Repositories;
 using GymFit.Domain.Entities;
 using GymFit.Domain.Enums;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace GymFit.Application.Services;
@@ -14,76 +15,93 @@ public sealed class AiQuotaService : IAiQuotaService
     private readonly IAiUsageRepository _usage;
     private readonly IUnitOfWork _unitOfWork;
     private readonly SubscriptionTierLimitsOptions _limits;
+    private readonly ILogger<AiQuotaService> _logger;
 
     public AiQuotaService(
         ISubscriptionRepository subscriptions,
         IAiUsageRepository usage,
         IUnitOfWork unitOfWork,
-        IOptions<SubscriptionTierLimitsOptions> limits)
+        IOptions<SubscriptionTierLimitsOptions> limits,
+        ILogger<AiQuotaService> logger)
     {
         _subscriptions = subscriptions;
         _usage = usage;
         _unitOfWork = unitOfWork;
         _limits = limits.Value;
+        _logger = logger;
     }
 
-    public async Task<SubscriptionTier> GetEffectiveTierAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        var now = DateTime.UtcNow;
-        var active = await _subscriptions.GetActiveForUserAsync(userId, now, cancellationToken);
-        return active?.Tier ?? SubscriptionTier.Free;
-    }
-
-    public async Task EnsureWithinMonthlyAiQuotaAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        var tier = await GetEffectiveTierAsync(userId, cancellationToken);
-        var limit = GetMonthlyLimit(tier);
-        if (limit < 0)
-            return;
-
-        if (limit == 0)
+    public Task<ServiceResult> EnsureWithinMonthlyAiQuotaAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default) =>
+        ServiceExecution.RunAsync(_logger, nameof(EnsureWithinMonthlyAiQuotaAsync), async () =>
         {
-            throw new InvalidOperationException(
-                "AI features are not available on your current plan. Please upgrade to Pro or Premium.");
-        }
+            if (userId == Guid.Empty)
+                return ServiceResult.Fail("Invalid user id.", ServiceFailureKind.BadRequest);
 
-        var periodKey = BillingPeriod.CurrentUtcMonthKey();
-        var used = await _usage.GetRequestCountAsync(userId, periodKey, cancellationToken);
-        if (used >= limit)
-        {
-            throw new InvalidOperationException(
-                $"You have reached your monthly AI limit ({limit} requests) for the {tier} plan. Upgrade or wait until next month.");
-        }
-    }
+            var now = DateTime.UtcNow;
+            var active = await _subscriptions.GetActiveForUserAsync(userId, now, cancellationToken);
+            var tier = active?.Tier ?? SubscriptionTier.Free;
+            var limit = GetMonthlyLimit(tier);
+            if (limit < 0)
+                return ServiceResult.Ok();
 
-    public async Task RecordSuccessfulAiCallAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        var tier = await GetEffectiveTierAsync(userId, cancellationToken);
-        var limit = GetMonthlyLimit(tier);
-        if (limit < 0)
-            return;
-
-        var periodKey = BillingPeriod.CurrentUtcMonthKey();
-        var ledger = await _usage.GetTrackedLedgerAsync(userId, periodKey, cancellationToken);
-        if (ledger is null)
-        {
-            ledger = new AiUsageLedger
+            if (limit == 0)
             {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                PeriodKey = periodKey,
-                RequestCount = 1
-            };
-            await _usage.AddAsync(ledger, cancellationToken);
-        }
-        else
-        {
-            ledger.RequestCount++;
-            _usage.Update(ledger);
-        }
+                return ServiceResult.Fail(
+                    "AI features are not available on your current plan. Please upgrade to Pro or Premium.",
+                    ServiceFailureKind.BadRequest);
+            }
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-    }
+            var periodKey = BillingPeriod.CurrentUtcMonthKey();
+            var used = await _usage.GetRequestCountAsync(userId, periodKey, cancellationToken);
+            if (used >= limit)
+            {
+                return ServiceResult.Fail(
+                    $"You have reached your monthly AI limit ({limit} requests) for the {tier} plan. Upgrade or wait until next month.",
+                    ServiceFailureKind.BadRequest);
+            }
+
+            return ServiceResult.Ok();
+        });
+
+    public Task<ServiceResult> RecordSuccessfulAiCallAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default) =>
+        ServiceExecution.RunAsync(_logger, nameof(RecordSuccessfulAiCallAsync), async () =>
+        {
+            if (userId == Guid.Empty)
+                return ServiceResult.Fail("Invalid user id.", ServiceFailureKind.BadRequest);
+
+            var now = DateTime.UtcNow;
+            var active = await _subscriptions.GetActiveForUserAsync(userId, now, cancellationToken);
+            var tier = active?.Tier ?? SubscriptionTier.Free;
+            var limit = GetMonthlyLimit(tier);
+            if (limit < 0)
+                return ServiceResult.Ok();
+
+            var periodKey = BillingPeriod.CurrentUtcMonthKey();
+            var ledger = await _usage.GetTrackedLedgerAsync(userId, periodKey, cancellationToken);
+            if (ledger is null)
+            {
+                ledger = new AiUsageLedger
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    PeriodKey = periodKey,
+                    RequestCount = 1
+                };
+                await _usage.AddAsync(ledger, cancellationToken);
+            }
+            else
+            {
+                ledger.RequestCount++;
+                _usage.Update(ledger);
+            }
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            return ServiceResult.Ok();
+        });
 
     private int GetMonthlyLimit(SubscriptionTier tier) =>
         tier switch

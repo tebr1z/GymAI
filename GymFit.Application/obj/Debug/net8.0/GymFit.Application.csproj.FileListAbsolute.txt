@@ -8,8 +8,15 @@ C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\G
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\GymFit.Application.AssemblyInfoInputs.cache
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\GymFit.Application.AssemblyInfo.cs
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\GymFit.Application.csproj.CoreCompileInputs.cache
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\GymFit.Application.sourcelink.json
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\GymFit.A.7322037E.Up2Date
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\GymFit.Application.dll
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\refint\GymFit.Application.dll
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\GymFit.Application.pdb
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Application\obj\Debug\net8.0\ref\GymFit.Application.dll
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut\GymFit.Application.deps.json
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut\GymFit.Application.dll
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut\GymFit.Application.pdb
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Application.deps.json
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Application.dll
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Application.pdb

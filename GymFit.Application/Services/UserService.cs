@@ -1,7 +1,9 @@
 using AutoMapper;
 using GymFit.Application.Abstractions;
+using GymFit.Application.Common;
 using GymFit.Application.DTOs.Users;
 using GymFit.Application.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace GymFit.Application.Services;
 
@@ -10,53 +12,80 @@ public sealed class UserService : IUserService
     private readonly IUserRepository _users;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly ILogger<UserService> _logger;
 
-    public UserService(IUserRepository users, IUnitOfWork unitOfWork, IMapper mapper)
+    public UserService(
+        IUserRepository users,
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        ILogger<UserService> logger)
     {
         _users = users;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _logger = logger;
     }
 
-    public async Task<UserProfileDto> GetProfileAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        var user = await _users.GetByIdWithTrainerProfileAsync(userId, cancellationToken);
-        if (user is null)
-            throw new KeyNotFoundException("User was not found.");
+    public Task<ServiceResult<UserProfileDto>> GetProfileAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        ServiceExecution.RunAsync(_logger, nameof(GetProfileAsync), async () =>
+        {
+            if (userId == Guid.Empty)
+                return ServiceResult<UserProfileDto>.Fail("Invalid user id.", ServiceFailureKind.BadRequest);
 
-        return _mapper.Map<UserProfileDto>(user);
-    }
+            var user = await _users.GetByIdWithTrainerProfileAsync(userId, cancellationToken);
+            if (user is null)
+                return ServiceResult<UserProfileDto>.Fail("User was not found.", ServiceFailureKind.NotFound);
 
-    public async Task<UserProfileDto> UpdateProfileAsync(
+            return ServiceResult<UserProfileDto>.Ok(_mapper.Map<UserProfileDto>(user));
+        });
+
+    public Task<ServiceResult<UserProfileDto>> UpdateProfileAsync(
         Guid requestingUserId,
         Guid targetUserId,
         UpdateUserProfileDto request,
-        CancellationToken cancellationToken = default)
-    {
-        if (requestingUserId != targetUserId)
-            throw new InvalidOperationException("You can only update your own profile.");
+        CancellationToken cancellationToken = default) =>
+        ServiceExecution.RunAsync(_logger, nameof(UpdateProfileAsync), async () =>
+        {
+            if (request is null)
+                return ServiceResult<UserProfileDto>.Fail("Request body is required.", ServiceFailureKind.BadRequest);
 
-        var user = await _users.GetByIdTrackedAsync(targetUserId, cancellationToken);
-        if (user is null)
-            throw new KeyNotFoundException("User was not found.");
+            if (requestingUserId == Guid.Empty || targetUserId == Guid.Empty)
+                return ServiceResult<UserProfileDto>.Fail("Invalid user id.", ServiceFailureKind.BadRequest);
 
-        if (!string.IsNullOrWhiteSpace(request.FullName))
-            user.FullName = request.FullName.Trim();
+            if (requestingUserId != targetUserId)
+            {
+                return ServiceResult<UserProfileDto>.Fail(
+                    "You can only update your own profile.",
+                    ServiceFailureKind.Forbidden);
+            }
 
-        if (request.Weight.HasValue)
-            user.Weight = request.Weight;
+            var user = await _users.GetByIdTrackedAsync(targetUserId, cancellationToken);
+            if (user is null)
+                return ServiceResult<UserProfileDto>.Fail("User was not found.", ServiceFailureKind.NotFound);
 
-        if (request.Height.HasValue)
-            user.Height = request.Height;
+            if (!string.IsNullOrWhiteSpace(request.FullName))
+                user.FullName = request.FullName.Trim();
 
-        if (request.Goal is not null)
-            user.Goal = string.IsNullOrWhiteSpace(request.Goal) ? null : request.Goal.Trim();
+            if (request.Weight.HasValue)
+                user.Weight = request.Weight;
 
-        _users.Update(user);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+            if (request.Height.HasValue)
+                user.Height = request.Height;
 
-        var refreshed = await _users.GetByIdWithTrainerProfileAsync(targetUserId, cancellationToken)
-                        ?? throw new InvalidOperationException("Failed to load updated user.");
-        return _mapper.Map<UserProfileDto>(refreshed);
-    }
+            if (request.Goal is not null)
+                user.Goal = string.IsNullOrWhiteSpace(request.Goal) ? null : request.Goal.Trim();
+
+            _users.Update(user);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            var refreshed = await _users.GetByIdWithTrainerProfileAsync(targetUserId, cancellationToken);
+            if (refreshed is null)
+            {
+                return ServiceResult<UserProfileDto>.Fail(
+                    "Profile was updated but could not be reloaded.",
+                    ServiceFailureKind.BadRequest);
+            }
+
+            return ServiceResult<UserProfileDto>.Ok(_mapper.Map<UserProfileDto>(refreshed));
+        });
 }

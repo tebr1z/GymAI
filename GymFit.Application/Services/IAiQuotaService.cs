@@ -1,12 +1,10 @@
-using GymFit.Domain.Enums;
+using GymFit.Application.Common;
 
 namespace GymFit.Application.Services;
 
 public interface IAiQuotaService
 {
-    Task<SubscriptionTier> GetEffectiveTierAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<ServiceResult> EnsureWithinMonthlyAiQuotaAsync(Guid userId, CancellationToken cancellationToken = default);
 
-    Task EnsureWithinMonthlyAiQuotaAsync(Guid userId, CancellationToken cancellationToken = default);
-
-    Task RecordSuccessfulAiCallAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<ServiceResult> RecordSuccessfulAiCallAsync(Guid userId, CancellationToken cancellationToken = default);
 }
