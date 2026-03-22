@@ -61,11 +61,16 @@ public sealed class ExceptionHandlingMiddleware
         if (_environment.IsDevelopment() && mapped.StatusCode == StatusCodes.Status500InternalServerError)
             details = exception.ToString();
 
+        var validationErrors = exception is ValidationException ve
+            ? GroupValidationErrors(ve)
+            : null;
+
         var payload = new GlobalErrorResponse
         {
             Success = false,
             Message = mapped.Message,
-            Details = details
+            Details = details,
+            Errors = validationErrors
         };
 
         await context.Response.WriteAsync(JsonSerializer.Serialize(payload, ApiJson.Options));
@@ -166,6 +171,25 @@ public sealed class ExceptionHandlingMiddleware
                 ? e.ErrorMessage
                 : $"{e.PropertyName}: {e.ErrorMessage}");
         return string.Join("; ", parts);
+    }
+
+    private static Dictionary<string, string[]> GroupValidationErrors(ValidationException ve)
+    {
+        return ve.Errors
+            .GroupBy(e => string.IsNullOrEmpty(e.PropertyName) ? "_" : e.PropertyName)
+            .ToDictionary(
+                g => ToCamelCaseKey(g.Key),
+                g => g.Select(x => string.IsNullOrEmpty(x.ErrorMessage) ? "Invalid value." : x.ErrorMessage).ToArray(),
+                StringComparer.Ordinal);
+    }
+
+    private static string ToCamelCaseKey(string key)
+    {
+        if (string.IsNullOrEmpty(key) || key == "_")
+            return key;
+        if (!char.IsUpper(key[0]))
+            return key;
+        return char.ToLowerInvariant(key[0]) + key[1..];
     }
 
     private MappedError MapDbUpdateException(Exception exception)

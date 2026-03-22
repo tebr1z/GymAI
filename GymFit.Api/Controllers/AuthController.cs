@@ -27,7 +27,7 @@ public sealed class AuthController : ApiV1ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _authService.RegisterAsync(request, cancellationToken);
-        return Ok(result);
+        return MapToActionResult(result);
     }
 
     [AllowAnonymous]
@@ -39,7 +39,7 @@ public sealed class AuthController : ApiV1ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _authService.LoginAsync(request, cancellationToken);
-        return Ok(result);
+        return MapToActionResult(result);
     }
 
     [Authorize(Policy = AuthorizationPolicies.RequireUser)]

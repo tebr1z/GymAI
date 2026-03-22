@@ -9,8 +9,10 @@ using GymFit.Application;
 using GymFit.Application.Abstractions;
 using GymFit.Application.Validators;
 using GymFit.Infrastructure;
+using GymFit.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,11 +36,16 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
 builder.Services.AddGymFitApiVersioning();
 builder.Services.AddGymFitControllersWithEnvelope();
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
 builder.Services.AddGymFitJwtAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddGymFitAuthorizationPolicies();
+
+ValidatorOptions.Global.PropertyNameResolver = (_, member, _) =>
+    member?.Name is { Length: > 0 } n
+        ? char.ToLowerInvariant(n[0]) + n[1..]
+        : null;
 
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterDtoValidator>();
@@ -46,6 +53,14 @@ builder.Services.AddValidatorsFromAssemblyContaining<RegisterDtoValidator>();
 builder.Services.AddGymFitSwagger();
 
 var app = builder.Build();
+
+var dbLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Database");
+var dbInit = await DatabaseInitializer.TryMigrateAsync(app.Services, dbLogger);
+if (!dbInit.Success)
+{
+    Log.Warning("{Message}. API will start; database-dependent endpoints will fail until connectivity is restored.",
+        dbInit.Message);
+}
 
 // Correlation id first so all downstream middleware and logs share the same id.
 app.UseMiddleware<CorrelationIdMiddleware>();
@@ -90,7 +105,7 @@ app.MapControllers();
 try
 {
     Log.Information("GymFit API starting");
-    app.Run();
+    await app.RunAsync();
 }
 catch (Exception ex)
 {

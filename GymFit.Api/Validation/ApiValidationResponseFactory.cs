@@ -10,11 +10,11 @@ public static class ApiValidationResponseFactory
         var fieldErrors = context.ModelState
             .Where(x => x.Value?.Errors.Count > 0)
             .ToDictionary(
-                x => string.IsNullOrEmpty(x.Key) ? "_" : x.Key,
+                x => ToCamelCaseKey(string.IsNullOrEmpty(x.Key) ? "_" : x.Key),
                 x => x.Value!.Errors
                     .Select(e => string.IsNullOrEmpty(e.ErrorMessage) ? "Invalid value." : e.ErrorMessage)
                     .ToArray(),
-                StringComparer.OrdinalIgnoreCase);
+                StringComparer.Ordinal);
 
         var details = string.Join(
             "; ",
@@ -23,10 +23,20 @@ public static class ApiValidationResponseFactory
         var payload = new GlobalErrorResponse
         {
             Success = false,
-            Message = "Validation failed. See details for field-specific errors.",
-            Details = string.IsNullOrEmpty(details) ? null : details
+            Message = "Validation failed. See errors for field-specific messages.",
+            Details = string.IsNullOrEmpty(details) ? null : details,
+            Errors = fieldErrors.Count > 0 ? fieldErrors : null
         };
 
         return new BadRequestObjectResult(payload);
+    }
+
+    private static string ToCamelCaseKey(string key)
+    {
+        if (string.IsNullOrEmpty(key) || key == "_")
+            return key;
+        if (!char.IsUpper(key[0]))
+            return key;
+        return char.ToLowerInvariant(key[0]) + key.Substring(1);
     }
 }

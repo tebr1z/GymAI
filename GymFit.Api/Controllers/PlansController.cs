@@ -26,8 +26,8 @@ public sealed class PlansController : ApiV1ControllerBase
         CancellationToken cancellationToken)
     {
         var userId = User.GetRequiredUserId();
-        var plan = await _planService.CreateAsync(userId, request, cancellationToken);
-        return Ok(plan);
+        var result = await _planService.CreateAsync(userId, request, cancellationToken);
+        return MapToActionResult(result);
     }
 
     [HttpGet("me")]
@@ -37,8 +37,8 @@ public sealed class PlansController : ApiV1ControllerBase
         CancellationToken cancellationToken)
     {
         var userId = User.GetRequiredUserId();
-        var plans = await _planService.ListForUserAsync(userId, query, cancellationToken);
-        return Ok(plans);
+        var result = await _planService.ListForUserAsync(userId, query, cancellationToken);
+        return MapToActionResult(result);
     }
 
     [HttpGet("{planId:guid}")]
@@ -46,7 +46,7 @@ public sealed class PlansController : ApiV1ControllerBase
     public async Task<ActionResult<PlanDto>> Get(Guid planId, CancellationToken cancellationToken)
     {
         var userId = User.GetRequiredUserId();
-        var plan = await _planService.GetAsync(planId, userId, cancellationToken);
-        return Ok(plan);
+        var result = await _planService.GetAsync(planId, userId, cancellationToken);
+        return MapToActionResult(result);
     }
 }

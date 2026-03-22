@@ -23,8 +23,8 @@ public sealed class UsersController : ApiV1ControllerBase
     public async Task<ActionResult<UserProfileDto>> GetMe(CancellationToken cancellationToken)
     {
         var userId = User.GetRequiredUserId();
-        var profile = await _userService.GetProfileAsync(userId, cancellationToken);
-        return Ok(profile);
+        var result = await _userService.GetProfileAsync(userId, cancellationToken);
+        return MapToActionResult(result);
     }
 
     [HttpPatch("me")]
@@ -34,7 +34,7 @@ public sealed class UsersController : ApiV1ControllerBase
         CancellationToken cancellationToken)
     {
         var userId = User.GetRequiredUserId();
-        var profile = await _userService.UpdateProfileAsync(userId, userId, request, cancellationToken);
-        return Ok(profile);
+        var result = await _userService.UpdateProfileAsync(userId, userId, request, cancellationToken);
+        return MapToActionResult(result);
     }
 }

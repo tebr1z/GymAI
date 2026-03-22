@@ -27,8 +27,8 @@ public sealed class TrainerController : ApiV1ControllerBase
         [FromQuery] TrainerMarketplaceQuery query,
         CancellationToken cancellationToken)
     {
-        var page = await _trainerService.ListMarketplaceAsync(query, cancellationToken);
-        return Ok(page);
+        var result = await _trainerService.ListMarketplaceAsync(query, cancellationToken);
+        return MapToActionResult(result);
     }
 
     /// <summary>Get a single trainer's public profile (marketplace-visible only if approved).</summary>
@@ -39,8 +39,8 @@ public sealed class TrainerController : ApiV1ControllerBase
         Guid trainerProfileId,
         CancellationToken cancellationToken)
     {
-        var trainer = await _trainerService.GetTrainerAsync(trainerProfileId, cancellationToken);
-        return Ok(trainer);
+        var result = await _trainerService.GetTrainerAsync(trainerProfileId, cancellationToken);
+        return MapToActionResult(result);
     }
 
     /// <summary>Create a booking; price is snapshotted from the trainer profile at booking time.</summary>
@@ -52,8 +52,8 @@ public sealed class TrainerController : ApiV1ControllerBase
         CancellationToken cancellationToken)
     {
         var clientId = User.GetRequiredUserId();
-        var order = await _trainerService.BookTrainerAsync(clientId, request, cancellationToken);
-        return Ok(order);
+        var result = await _trainerService.BookTrainerAsync(clientId, request, cancellationToken);
+        return MapToActionResult(result);
     }
 
     [Authorize(Policy = AuthorizationPolicies.RequireUser)]
@@ -64,8 +64,8 @@ public sealed class TrainerController : ApiV1ControllerBase
         CancellationToken cancellationToken)
     {
         var clientId = User.GetRequiredUserId();
-        var page = await _trainerService.ListMyBookingsAsync(clientId, query, cancellationToken);
-        return Ok(page);
+        var result = await _trainerService.ListMyBookingsAsync(clientId, query, cancellationToken);
+        return MapToActionResult(result);
     }
 
     [Authorize(Policy = AuthorizationPolicies.RequireTrainer)]
@@ -76,7 +76,7 @@ public sealed class TrainerController : ApiV1ControllerBase
         CancellationToken cancellationToken)
     {
         var trainerId = User.GetRequiredUserId();
-        var page = await _trainerService.ListTrainerOrdersAsync(trainerId, query, cancellationToken);
-        return Ok(page);
+        var result = await _trainerService.ListTrainerOrdersAsync(trainerId, query, cancellationToken);
+        return MapToActionResult(result);
     }
 }

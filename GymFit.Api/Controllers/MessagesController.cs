@@ -27,8 +27,8 @@ public sealed class MessagesController : ApiV1ControllerBase
         CancellationToken cancellationToken)
     {
         var senderId = User.GetRequiredUserId();
-        var message = await _messageService.SendAsync(senderId, request, cancellationToken);
-        return Ok(message);
+        var result = await _messageService.SendAsync(senderId, request, cancellationToken);
+        return MapToActionResult(result);
     }
 
     /// <summary>
@@ -42,8 +42,8 @@ public sealed class MessagesController : ApiV1ControllerBase
         CancellationToken cancellationToken)
     {
         var userId = User.GetRequiredUserId();
-        var page = await _messageService.GetConversationPageAsync(userId, peerUserId, pagination, cancellationToken);
-        return Ok(page);
+        var result = await _messageService.GetConversationPageAsync(userId, peerUserId, pagination, cancellationToken);
+        return MapToActionResult(result);
     }
 
     /// <summary>Received messages, paginated (newest page first; items oldest→newest within the page).</summary>
@@ -54,7 +54,7 @@ public sealed class MessagesController : ApiV1ControllerBase
         CancellationToken cancellationToken)
     {
         var userId = User.GetRequiredUserId();
-        var page = await _messageService.GetInboxPageAsync(userId, pagination, cancellationToken);
-        return Ok(page);
+        var result = await _messageService.GetInboxPageAsync(userId, pagination, cancellationToken);
+        return MapToActionResult(result);
     }
 }

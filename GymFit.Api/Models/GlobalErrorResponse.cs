@@ -9,4 +9,7 @@ public sealed class GlobalErrorResponse
 
     /// <summary>Optional technical or field-level detail (omit or null when not needed).</summary>
     public string? Details { get; init; }
+
+    /// <summary>Per-field validation messages (camelCase keys when possible).</summary>
+    public IReadOnlyDictionary<string, string[]>? Errors { get; init; }
 }

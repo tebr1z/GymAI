@@ -27,7 +27,7 @@ public sealed class AIController : ApiV1ControllerBase
     {
         var userId = User.GetRequiredUserId();
         var result = await _aiService.GenerateWorkoutPlanAsync(userId, request.UserInput, cancellationToken);
-        return Ok(result);
+        return MapToActionResult(result);
     }
 
     [HttpPost("diet-plan")]
@@ -39,6 +39,6 @@ public sealed class AIController : ApiV1ControllerBase
     {
         var userId = User.GetRequiredUserId();
         var result = await _aiService.GenerateDietPlanAsync(userId, request.UserInput, cancellationToken);
-        return Ok(result);
+        return MapToActionResult(result);
     }
 }

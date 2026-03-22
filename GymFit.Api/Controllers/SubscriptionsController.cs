@@ -23,8 +23,8 @@ public sealed class SubscriptionsController : ApiV1ControllerBase
     public async Task<ActionResult<SubscriptionOverviewDto>> GetMine(CancellationToken cancellationToken)
     {
         var userId = User.GetRequiredUserId();
-        var overview = await _subscriptionService.GetOverviewForUserAsync(userId, cancellationToken);
-        return Ok(overview);
+        var result = await _subscriptionService.GetOverviewForUserAsync(userId, cancellationToken);
+        return MapToActionResult(result);
     }
 
     [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
@@ -36,7 +36,7 @@ public sealed class SubscriptionsController : ApiV1ControllerBase
         [FromBody] AssignSubscriptionDto request,
         CancellationToken cancellationToken)
     {
-        await _subscriptionService.AssignAsync(request, cancellationToken);
-        return NoContent();
+        var result = await _subscriptionService.AssignAsync(request, cancellationToken);
+        return MapToActionResult(result);
     }
 }
