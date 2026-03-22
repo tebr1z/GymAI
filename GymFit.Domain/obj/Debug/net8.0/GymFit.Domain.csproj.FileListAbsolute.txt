@@ -5,7 +5,14 @@ C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Debug\net8.0\GymFit
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Debug\net8.0\GymFit.Domain.AssemblyInfoInputs.cache
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Debug\net8.0\GymFit.Domain.AssemblyInfo.cs
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Debug\net8.0\GymFit.Domain.csproj.CoreCompileInputs.cache
+C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Debug\net8.0\GymFit.Domain.sourcelink.json
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Debug\net8.0\GymFit.Domain.dll
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Debug\net8.0\refint\GymFit.Domain.dll
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Debug\net8.0\GymFit.Domain.pdb
 C:\Users\hasim\Desktop\Real Project\GymFit\GymFit.Domain\obj\Debug\net8.0\ref\GymFit.Domain.dll
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut\GymFit.Domain.deps.json
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut\GymFit.Domain.dll
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut\GymFit.Domain.pdb
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Domain.deps.json
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Domain.dll
+C:\Users\hasim\AppData\Local\Temp\GymFitBuildOut2\GymFit.Domain.pdb
